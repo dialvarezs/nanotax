@@ -26,7 +26,7 @@ process SUMMARY_MMSEQS {
         --min_aln ${params.mmseqs2_min_aln} \\
         --min_identity ${params.mmseqs2_min_identity} \\
         --group ${meta.group} \\
-        --sample ${prefix} 
+        --sample ${prefix}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

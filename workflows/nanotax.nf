@@ -4,8 +4,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { MULTIQC                 } from '../modules/nf-core/multiqc/main'
-include { MMSEQS_EASYSEARCH       } from '../modules/nf-core/mmseqs/easysearch'
-include { SUMMARY_MMSEQS          } from '../modules/local/summarymmseqs'
 include { MERGE_AND_GROUP_SAMPLES } from '../modules/local/mergeandgroupsamples'
 include { PLOT_CORE               } from '../modules/local/plotcore'
 include { PLOT_TAXONOMY           } from '../modules/local/plottaxonomy'
