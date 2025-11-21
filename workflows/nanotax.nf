@@ -74,6 +74,7 @@ workflow NANOTAX {
      */
     if (!params.skip_qc) {
         QUALITY_CONTROL(ch_samples, params.filtlong_sampling)
+        ch_multiqc_files = ch_multiqc_files.mix(QUALITY_CONTROL.out.multiqc_files)
     }
 
     /*
@@ -86,17 +87,6 @@ workflow NANOTAX {
         params.skip_emu,
         params.skip_mmseqs2,
     )
-
-    // // Taxonomic assignment
-    // MMSEQS_EASYSEARCH(ch_input_tax,MMSEQS_CREATE16SDB.out.path_db)
-    // ch_versions = ch_versions.mix(MMSEQS_EASYSEARCH.out.versions.first())
-
-    // ch_mmseqs_output = MMSEQS_EASYSEARCH.out.tsv//.map{meta,tsv -> tsv}.collect()
-    // //ch_first_group = MMSEQS_EASYSEARCH.out.tsv.map{meta,tsv -> meta}.first()
-    // ch_groups_info = MMSEQS_EASYSEARCH.out.tsv.map{meta,tsv -> "${meta.id}:${meta.group}"}.collect()
-    // ch_samples = ch_samplesheet.map{meta,path-> "${meta.id}"}.collect()
-    // SUMMARY_MMSEQS(ch_mmseqs_output,ch_samples)
-    // MERGE_AND_GROUP_SAMPLES(SUMMARY_MMSEQS.out.summary_csv.collect())//, SUMMARY_MMSEQS.out.abundance_picrust.collect())
 
     // // Plots for Taxonomic assignment
     // ch_groups = ch_samplesheet.map{meta,path-> "${meta.id}:${meta.group}"}.collect()
