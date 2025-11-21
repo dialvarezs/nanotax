@@ -1,5 +1,6 @@
 include { EMU_ABUNDANCE     } from '../../../modules/nf-core/emu/abundance/main'
 include { MMSEQS_EASYSEARCH } from '../../../modules/nf-core/mmseqs/easysearch/main'
+include { SUMMARISE_MMSEQS  } from '../../../modules/local/summarise_mmseqs/main'
 
 workflow TAXONOMIC_ASSIGNMENT {
     take:
@@ -26,6 +27,9 @@ workflow TAXONOMIC_ASSIGNMENT {
     if (!val_skip_mmseqs2) {
         MMSEQS_EASYSEARCH(ch_reads, ch_mmseqs2_db)
         ch_versions = ch_versions.mix(MMSEQS_EASYSEARCH.out.versions)
+
+        SUMMARISE_MMSEQS(MMSEQS_EASYSEARCH.out.tsv)
+        ch_versions = ch_versions.mix(SUMMARISE_MMSEQS.out.versions)
     }
 
     // // Taxonomic assignment

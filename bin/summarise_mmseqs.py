@@ -142,7 +142,6 @@ def main(argv=None):
             .len("count")
             .sort("count", descending=True)
             .with_columns(
-                sample=pl.lit(args.sample),
                 perc=(pl.col("count") / pl.col("count").sum() * 100).round(2),
             )
             # only keep taxa with at least 0.01% abundance and recalculate percentages
@@ -150,19 +149,27 @@ def main(argv=None):
             .with_columns(perc=(pl.col("count") / pl.col("count").sum() * 100).round(2))
         )
 
-        if args.group != "false":
-            df_abundance = df_abundance.with_columns(group=pl.lit(args.group))
+        # Add metadata columns dynamically
+        if args.metadata:
+            df_abundance = df_abundance.with_columns(
+                **{key: pl.lit(value) for key, value in args.metadata.items()}
+            )
 
-        df_abundance.sink_csv(f"{args.sample}_{tax_level}.csv")
+        # Use sample name from metadata for output filename, or fallback to "output"
+        sample_name = args.metadata.get("sample", "output") if args.metadata else "output"
+        df_abundance.sink_csv(f"{sample_name}_{tax_level}.csv")
+
+    # Use sample name from metadata for output filename, or fallback to "output"
+    sample_name = args.metadata.get("sample", "output") if args.metadata else "output"
 
     Path("taxlineage").mkdir(exist_ok=True)
-    df_taxonomy.write_csv(f"taxlineage/{args.sample}_taxlineage.csv")
+    df_taxonomy.write_csv(f"taxlineage/{sample_name}_taxlineage.csv")
 
     # Picrust input
     (
         df_final.select("query")
-        .with_columns(pl.lit(1).alias(args.sample))
-        .write_csv(f"reads_{args.sample}.tsv", separator="\t", include_header=True)
+        .with_columns(pl.lit(1).alias(sample_name))
+        .write_csv(f"reads_{sample_name}.tsv", separator="\t", include_header=True)
     )
 
 
@@ -200,6 +207,20 @@ def load_mmseqs_file(
     return ldf
 
 
+def parse_metadata(metadata_str: str) -> dict[str, str]:
+    """Parse metadata string in format key=value,key2=value2 into a dictionary."""
+    if not metadata_str:
+        return {}
+
+    metadata = {}
+    for item in metadata_str.split(","):
+        if "=" not in item:
+            raise argparse.ArgumentTypeError(f"Invalid metadata format: {item}. Expected key=value")
+        key, value = item.split("=", 1)
+        metadata[key.strip()] = value.strip()
+    return metadata
+
+
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Merge blast out file with lineages and summary")
 
@@ -210,14 +231,6 @@ def parse_args(argv=None):
         metavar="FILE",
         help="Input file",
     )
-
-    parser.add_argument(
-        "-d",
-        "--db",
-        required=True,
-        help="database",
-    )
-
     parser.add_argument(
         "-i",
         "--min-identity",
@@ -227,7 +240,6 @@ def parse_args(argv=None):
         type=float,
         help="Input file",
     )
-
     parser.add_argument(
         "-a",
         "--min-aln",
@@ -238,16 +250,16 @@ def parse_args(argv=None):
         help="Input file",
     )
     parser.add_argument(
-        "-s",
-        "--sample",
-        required=True,
-        help="sample",
-    )
-    parser.add_argument(
-        "-g",
-        "--group",
-        required=True,
-        help="group",
+        "-m",
+        "--metadata",
+        required=False,
+        default=None,
+        metavar="KEY=VALUE",
+        type=parse_metadata,
+        help=(
+            "Metadata columns to add to output. "
+            "Format: key=value,key2=value2 (e.g., sample=S1,group=control)"
+        ),
     )
 
     return parser.parse_args(argv)

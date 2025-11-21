@@ -1,4 +1,4 @@
-process SUMMARY_MMSEQS {
+process SUMMARISE_MMSEQS {
     label 'process_single'
 
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -7,26 +7,29 @@ process SUMMARY_MMSEQS {
 
     input:
     tuple val(meta), path(mmseqs_tsv)
-    val samples
 
     output:
     path ("*.csv"), emit: summary_csv
     path ("taxlineage/${prefix}_taxlineage.csv"), emit: taxlineage
     tuple val(meta), path("reads_*.tsv"), emit: abundance_picrust
+    path 'versions.yml', emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
+    // TODO: implement this better
+    metadata = "sample=${meta.id}"
+    if (meta.containsKey('group') && meta.group != 'false') {
+        metadata += ",group=${meta.group}"
+    }
     """
     summarise_mmseqs.py \\
-        --db ${params.mmseqs2_db_name} \\
-        --mmseqs_tsv ${mmseqs_tsv} \\
-        --min_aln ${params.mmseqs2_min_aln} \\
-        --min_identity ${params.mmseqs2_min_identity} \\
-        --group ${meta.group} \\
-        --sample ${prefix}
+        --mmseqs-tsv ${mmseqs_tsv} \\
+        --min-aln ${params.mmseqs2_min_aln} \\
+        --min-identity ${params.mmseqs2_min_identity} \\
+        --metadata ${metadata}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
