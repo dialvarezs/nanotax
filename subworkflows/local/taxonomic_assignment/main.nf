@@ -9,6 +9,8 @@ workflow TAXONOMIC_ASSIGNMENT {
     ch_mmseqs2_db
     val_skip_emu
     val_skip_mmseqs2
+    val_min_alignment_length
+    val_min_identity
 
     main:
     ch_versions = channel.empty()
@@ -28,7 +30,7 @@ workflow TAXONOMIC_ASSIGNMENT {
         MMSEQS_EASYSEARCH(ch_reads, ch_mmseqs2_db)
         ch_versions = ch_versions.mix(MMSEQS_EASYSEARCH.out.versions)
 
-        MMSEQS_SUMMARISE(MMSEQS_EASYSEARCH.out.tsv)
+        MMSEQS_SUMMARISE(MMSEQS_EASYSEARCH.out.tsv, val_min_identity, val_min_alignment_length)
         ch_versions = ch_versions.mix(MMSEQS_SUMMARISE.out.versions)
     }
 

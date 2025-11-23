@@ -86,6 +86,8 @@ workflow NANOTAX {
         PREPARE_DATABASES.out.mmseqs2_database,
         params.skip_emu,
         params.skip_mmseqs2,
+        params.mmseqs2_min_aln,
+        params.mmseqs2_min_identity,
     )
 
     // // Plots for Taxonomic assignment

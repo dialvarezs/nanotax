@@ -8,6 +8,8 @@ process MMSEQS_SUMMARISE {
 
     input:
     tuple val(meta), path(mmseqs_tsv)
+    val min_identity
+    val min_alignment_length
 
     output:
     path ("*.csv"), emit: summary_csv
@@ -20,7 +22,7 @@ process MMSEQS_SUMMARISE {
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
-    // TODO: think on a better implementation
+    // TODO: maybe this requires a better implementation
     metadata = "sample=${meta.id}"
     if (meta.containsKey('group') && meta.group != 'false') {
         metadata += ",group=${meta.group}"
@@ -28,8 +30,8 @@ process MMSEQS_SUMMARISE {
     """
     summarise_mmseqs.py \\
         --mmseqs-tsv ${mmseqs_tsv} \\
-        --min-aln ${params.mmseqs2_min_aln} \\
-        --min-identity ${params.mmseqs2_min_identity} \\
+        --min-identity ${min_identity} \\
+        --min-alignment-length ${min_alignment_length} \\
         --metadata ${metadata}
 
     cat <<-END_VERSIONS > versions.yml

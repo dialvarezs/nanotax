@@ -13,7 +13,7 @@ from pathlib import Path
 import polars as pl
 import polars.selectors as cs
 
-TAX_LEVELS = ["phylum", "class", "order", "family", "genus", "species"]
+TAXONOMIC_LEVELS = ["phylum", "class", "order", "family", "genus", "species"]
 PIDENT_CUTOFF = 0.6
 MINIMUM_TAXA_PERCENTAGE = 0.01
 
@@ -21,15 +21,15 @@ MINIMUM_TAXA_PERCENTAGE = 0.01
 def main(argv=None):
     args = parse_args(argv)
     last_tax_level = "species"  # TODO: make this configurable
-    tax_levels = TAX_LEVELS[: TAX_LEVELS.index(last_tax_level) + 1]
+    tax_levels = TAXONOMIC_LEVELS[: TAXONOMIC_LEVELS.index(last_tax_level) + 1]
 
-    ldf = load_mmseqs_file(args.mmseqs_tsv, args.min_identity, args.min_aln, tax_levels)
+    ldf = load_mmseqs_file(args.mmseqs_tsv, args.min_identity, args.min_alignment_length, tax_levels)
 
     #
     # Case 1: Unique assignments
     #
     ldf_unique_matches = ldf.unique(subset="query", keep="none").select(
-        ["query", "taxname", *TAX_LEVELS[:-1]]
+        ["query", "taxname", *TAXONOMIC_LEVELS[:-1]]
     )
     ldf_taxonomy = ldf.select(["taxname", *tax_levels]).unique(keep="first")
 
@@ -60,7 +60,7 @@ def main(argv=None):
         ldf_multi_match.filter(pl.col("is_unique"))
         .select("query", cs.matches(r"*_first$"))
         .rename(lambda col: col.replace("_first", ""))
-        .select("query", "taxname", *TAX_LEVELS[:-1])
+        .select("query", "taxname", *TAXONOMIC_LEVELS[:-1])
     )
 
     # Reads with valid secondary alignments
@@ -75,20 +75,20 @@ def main(argv=None):
 
     ldf_mixed_genus = (
         ldf_valid_sec_alns_diff_genus.group_by("query")
-        .agg(cs.by_name(*TAX_LEVELS[:-1]).unique().sort().str.join(" / "))
+        .agg(cs.by_name(*TAXONOMIC_LEVELS[:-1]).unique().sort().str.join(" / "))
         .with_columns(
             taxname=pl.col("genus") + pl.lit(" (mixed species)"),
         )
         # remove those reads that have alignments with more than two genus
         .filter(pl.col("genus").str.count_matches("/").lt(2))
-        .select("query", "taxname", *TAX_LEVELS[:-1])
+        .select("query", "taxname", *TAXONOMIC_LEVELS[:-1])
     )
 
     # Update taxonomy with mixed genus entries
     ldf_taxonomy = pl.concat(
         [
-            ldf_taxonomy.filter(~pl.col("taxname").str.contains("mixed")).select("taxname", *TAX_LEVELS[:-1]),
-            ldf_mixed_genus.select("taxname", *TAX_LEVELS[:-1]),
+            ldf_taxonomy.filter(~pl.col("taxname").str.contains("mixed")).select("taxname", *TAXONOMIC_LEVELS[:-1]),
+            ldf_mixed_genus.select("taxname", *TAXONOMIC_LEVELS[:-1]),
         ]
     )
 
@@ -103,7 +103,7 @@ def main(argv=None):
         )
         .filter(pl.col("pident_diff") == 0)
         .unique(subset="query", keep="first")
-        .select("query", "taxname", *TAX_LEVELS[:-1])
+        .select("query", "taxname", *TAXONOMIC_LEVELS[:-1])
         .with_columns(taxname=pl.col("genus") + pl.lit(" (mixed species)"))
     )
 
@@ -113,7 +113,7 @@ def main(argv=None):
     same_genus_zero_ids = set(ldf_valid_sec_matches_same_genus_zero.select("query").collect().to_series())
     ldf_valid_sec_matches_same_genus_non_zero = (
         ldf_valid_sec_matches.filter(~pl.col("query").is_in(same_genus_zero_ids))
-        .select("query", "taxname", *[f"{col}_first" for col in TAX_LEVELS[:-1]])
+        .select("query", "taxname", *[f"{col}_first" for col in TAXONOMIC_LEVELS[:-1]])
         .rename(lambda col: col.replace("_first", ""))
     )
 
@@ -174,14 +174,14 @@ def main(argv=None):
 
 
 def load_mmseqs_file(
-    file_path: str, min_identity: float, min_aln: int, tax_levels: list[str] = TAX_LEVELS
+    file_path: str, min_identity: float, min_alignment_length: int, tax_levels: list[str] = TAXONOMIC_LEVELS
 ) -> pl.LazyFrame:
     """Load MMseqs file and filter by identity and alignment length."""
     colnames = ["query", "target", "pident", "tcov", "alnlen", "taxname", "taxlineage"]
 
     ldf = (
         pl.scan_csv(file_path, separator="\t", has_header=False, new_columns=colnames)
-        .filter((pl.col("pident") >= (min_identity) * 100) & (pl.col("alnlen") >= min_aln))
+        .filter((pl.col("pident") >= (min_identity) * 100) & (pl.col("alnlen") >= min_alignment_length))
         .with_columns(
             pident=pl.col("pident").round(1),
             tcov=pl.col("tcov").round(3),
@@ -229,7 +229,7 @@ def parse_args(argv=None):
         "--mmseqs-tsv",
         required=True,
         metavar="FILE",
-        help="Input file",
+        help="MMseqs2 output file in TSV format containing taxonomic assignments",
     )
     parser.add_argument(
         "-i",
@@ -238,16 +238,16 @@ def parse_args(argv=None):
         default=0.95,
         metavar="FLOAT",
         type=float,
-        help="Input file",
+        help="Minimum sequence identity threshold (0-1) for filtering alignments",
     )
     parser.add_argument(
         "-a",
-        "--min-aln",
+        "--min-alignment-length",
         required=False,
         default=1000,
-        metavar="FLOAT",
+        metavar="INT",
         type=int,
-        help="Input file",
+        help="Minimum alignment length in base pairs for filtering alignments",
     )
     parser.add_argument(
         "-m",
@@ -257,8 +257,7 @@ def parse_args(argv=None):
         metavar="KEY=VALUE",
         type=parse_metadata,
         help=(
-            "Metadata columns to add to output. "
-            "Format: key=value,key2=value2 (e.g., sample=S1,group=control)"
+            "Metadata columns to add to output. Format: key=value,key2=value2 (e.g., sample=S1,group=control)"
         ),
     )
 
