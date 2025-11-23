@@ -47,6 +47,17 @@ workflow PREPARE_DATABASES {
 
     if (!val_skip_mmseqs2) {
         if (mmseqs2_db_name == 'genbank') {
+            TAXDUMP_DOWNLOAD(
+                [
+                    [id: 'taxdump'],
+                    'https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz',
+                ]
+            )
+            ch_versions = ch_versions.mix(TAXDUMP_DOWNLOAD.out.versions)
+
+            TAXDUMP_UNTAR(TAXDUMP_DOWNLOAD.out.downloaded_file)
+            ch_versions = ch_versions.mix(TAXDUMP_UNTAR.out.versions)
+
             BLAST_UPDATEBLASTDB([[id: '16S_ribosomal_RNA'], '16S_ribosomal_RNA'])
             ch_versions = ch_versions.mix(BLAST_UPDATEBLASTDB.out.versions)
 
@@ -66,17 +77,6 @@ workflow PREPARE_DATABASES {
 
             MMSEQS_CREATEINDEX(MMSEQS_CREATEDB.out.db)
             ch_versions = ch_versions.mix(MMSEQS_CREATEINDEX.out.versions)
-
-            TAXDUMP_DOWNLOAD(
-                [
-                    [id: 'taxdump'],
-                    'https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz',
-                ]
-            )
-            ch_versions = ch_versions.mix(TAXDUMP_DOWNLOAD.out.versions)
-
-            TAXDUMP_UNTAR(TAXDUMP_DOWNLOAD.out.downloaded_file)
-            ch_versions = ch_versions.mix(TAXDUMP_UNTAR.out.versions)
 
             MMSEQS_CREATETAXDB(
                 MMSEQS_CREATEINDEX.out.db_indexed,

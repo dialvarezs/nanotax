@@ -1,4 +1,5 @@
-process SUMMARISE_MMSEQS {
+process MMSEQS_SUMMARISE {
+    tag "${meta.id}"
     label 'process_single'
 
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -19,7 +20,7 @@ process SUMMARISE_MMSEQS {
 
     script:
     prefix = task.ext.prefix ?: "${meta.id}"
-    // TODO: implement this better
+    // TODO: think on a better implementation
     metadata = "sample=${meta.id}"
     if (meta.containsKey('group') && meta.group != 'false') {
         metadata += ",group=${meta.group}"
