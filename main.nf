@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    catg/nanotax
+    catg-umag/nanotax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/catg/nanotax
+    Github : https://github.com/catg-umag/nanotax
 ----------------------------------------------------------------------------------------
 */
 
@@ -25,7 +25,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_nano
 //
 // WORKFLOW: Run main analysis pipeline depending on type of input
 //
-workflow CATG_NANOTAX {
+workflow CATGUMAG_NANOTAX {
 
     take:
     samplesheet // channel: samplesheet read in from --input
@@ -59,13 +59,16 @@ workflow {
         params.monochrome_logs,
         args,
         params.outdir,
-        params.input
+        params.input,
+        params.help,
+        params.help_full,
+        params.show_hidden
     )
 
     //
     // WORKFLOW: Run main workflow
     //
-    CATG_NANOTAX (
+    CATGUMAG_NANOTAX (
         PIPELINE_INITIALISATION.out.samplesheet
     )
     //
@@ -78,7 +81,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        CATG_NANOTAX.out.multiqc_report
+        CATGUMAG_NANOTAX.out.multiqc_report
     )
 }
 
