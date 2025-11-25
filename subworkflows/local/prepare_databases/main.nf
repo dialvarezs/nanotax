@@ -4,12 +4,12 @@ include { BLAST_BLASTDBCMD as BLASTDBCMD_EXTRACT_TAXMAPPING } from '../../../mod
 include { BLAST_UPDATEBLASTDB                               } from '../../../modules/nf-core/blast/updateblastdb/main'
 include { MMSEQS_CREATEDB                                   } from '../../../modules/nf-core/mmseqs/createdb/main'
 include { MMSEQS_CREATEINDEX                                } from '../../../modules/nf-core/mmseqs/createindex/main'
+include { MMSEQS_CREATETAXDB                                } from '../../../modules/nf-core/mmseqs/createtaxdb/main'
 include { MMSEQS_DATABASES                                  } from '../../../modules/nf-core/mmseqs/databases/main'
 include { OSFCLIENT_FETCH as EMU_DB_FETCH                   } from '../../../modules/nf-core/osfclient/fetch/main'
 include { UNTAR as EMU_DB_UNTAR                             } from '../../../modules/nf-core/untar/main'
 include { UNTAR as TAXDUMP_UNTAR                            } from '../../../modules/nf-core/untar/main'
 
-include { MMSEQS_CREATETAXDB                                } from '../../../modules/local/mmseqs/createtaxdb/main'
 
 workflow PREPARE_DATABASES {
     take:

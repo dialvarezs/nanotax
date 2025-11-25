@@ -45,6 +45,11 @@
                         "git_sha": "38697a933bef7041bb935c9b8374d9948ce6c794",
                         "installed_by": ["modules"]
                     },
+                    "mmseqs/createtaxdb": {
+                        "branch": "master",
+                        "git_sha": "3c70bbfc626019c910bb83d6e1c042dccb3affe4",
+                        "installed_by": ["modules"]
+                    },
                     "mmseqs/databases": {
                         "branch": "master",
                         "git_sha": "38697a933bef7041bb935c9b8374d9948ce6c794",

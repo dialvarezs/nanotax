@@ -1,6 +1,6 @@
 process MMSEQS_CREATETAXDB {
     tag "${meta.id}"
-    label 'process_low'
+    label 'process_single'
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -14,7 +14,10 @@ process MMSEQS_CREATETAXDB {
 
     output:
     tuple val(meta), path(db), emit: db_with_taxonomy
-    path "versions.yml", emit: versions
+    tuple val("${task.process}"), val('mmseqs'), eval("mmseqs | grep 'Version' | sed 's/MMseqs2 Version: //'"), topic: versions, emit: versions_mmseqs
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
@@ -22,7 +25,8 @@ process MMSEQS_CREATETAXDB {
     taxdump_opt = taxdump_dir ? "--ncbi-tax-dump ${taxdump_dir}" : ""
     tax_mapping_opt = taxdump_dir && tax_mapping_file ? "--tax-mapping-file ${tax_mapping_file}" : ""
     """
-    DB_INPUT_PATH_NAME=\$(find -L "${db}/" -maxdepth 1 -name "${args2}" | sed 's/\\.[^.]*\$//' |  sed -e 'N;s/^\\(.*\\).*\\n\\1.*\$/\\1\\n\\1/;D' )
+    # Find database files, remove extension, and sort to get base name first (e.g., 'mmseqs' before 'mmseqs_aln')
+    DB_INPUT_PATH_NAME=\$(find -L "${db}/" -maxdepth 1 -name "${args2}" | sed 's/\\.[^.]*\$//' | sort | head -1)
 
     mmseqs createtaxdb \\
       \${DB_INPUT_PATH_NAME} \\
@@ -31,10 +35,17 @@ process MMSEQS_CREATETAXDB {
       ${taxdump_opt} \\
       ${tax_mapping_opt} \\
       ${args}
+    """
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        mmseqs: \$(mmseqs | grep 'Version' | sed 's/MMseqs2 Version: //')
-    END_VERSIONS
+    stub:
+    def args = task.ext.args ?: ''
+    def args2 = task.ext.args2 ?: "*.dbtype"
+    """
+    # Find database files, remove extension, and sort to get base name first (e.g., 'mmseqs' before 'mmseqs_aln')
+    DB_INPUT_PATH_NAME=\$(find -L "${db}/" -maxdepth 1 -name "${args2}" | sed 's/\\.[^.]*\$//' | sort | head -1)
+
+    echo ${args}
+    touch "${db}/\$(basename \${DB_INPUT_PATH_NAME})_mapping"
+    touch "${db}/\$(basename \${DB_INPUT_PATH_NAME})_taxonomy"
     """
 }
