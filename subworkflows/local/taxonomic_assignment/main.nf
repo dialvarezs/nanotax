@@ -13,8 +13,6 @@ workflow TAXONOMIC_ASSIGNMENT {
     val_min_identity
 
     main:
-    ch_versions = channel.empty()
-
     /*
      * EMU
      */
@@ -29,7 +27,6 @@ workflow TAXONOMIC_ASSIGNMENT {
         MMSEQS_EASYSEARCH(ch_reads, ch_mmseqs2_db)
 
         MMSEQS_SUMMARISE(MMSEQS_EASYSEARCH.out.tsv, val_min_identity, val_min_alignment_length)
-        ch_versions = ch_versions.mix(MMSEQS_SUMMARISE.out.versions)
     }
 
     // // Taxonomic assignment
@@ -42,7 +39,4 @@ workflow TAXONOMIC_ASSIGNMENT {
     // ch_samples = ch_samplesheet.map{meta,path-> "${meta.id}"}.collect()
     // SUMMARY_MMSEQS(ch_mmseqs_output,ch_samples)
     // MERGE_AND_GROUP_SAMPLES(SUMMARY_MMSEQS.out.summary_csv.collect())//, SUMMARY_MMSEQS.out.abundance_picrust.collect())
-
-    emit:
-    versions = ch_versions
 }

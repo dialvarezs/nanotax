@@ -15,7 +15,8 @@ process MMSEQS_SUMMARISE {
     path ("*.csv"), emit: summary_csv
     path ("taxlineage/${prefix}_taxlineage.csv"), emit: taxlineage
     tuple val(meta), path("reads_*.tsv"), emit: abundance_picrust
-    path 'versions.yml', emit: versions
+    tuple val("${task.process}"), val('python'), eval('python --version 2>&1 | sed \'s/Python //g\''), topic: versions, emit: versions_python
+    tuple val("${task.process}"), val('polars'), eval('python -c "import polars; print(polars.__version__)"'), topic: versions, emit: versions_polars
 
     when:
     task.ext.when == null || task.ext.when
@@ -33,12 +34,6 @@ process MMSEQS_SUMMARISE {
         --min-identity ${min_identity} \\
         --min-alignment-length ${min_alignment_length} \\
         --metadata ${metadata}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        polars: \$(python -c "import polars; print(polars.__version__)")
-    END_VERSIONS
     """
 
     stub:
@@ -48,11 +43,5 @@ process MMSEQS_SUMMARISE {
     echo ${args}
     mkdir taxlineage
     touch taxlineage/${prefix}_taxlineage.csv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version 2>&1 | sed 's/Python //g')
-        polars: \$(python -c "import polars; print(polars.__version__)")
-    END_VERSIONS
     """
 }
