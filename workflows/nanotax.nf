@@ -67,7 +67,6 @@ workflow NANOTAX {
         BASECALLING(ch_pod5_dir, ch_samplesheet, params.dorado_barcoding_kit)
 
         ch_samples = BASECALLING.out.samples
-        ch_versions = ch_versions.mix(BASECALLING.out.versions)
     }
     else {
         ch_samples = ch_samplesheet
@@ -78,7 +77,6 @@ workflow NANOTAX {
      */
     if (!params.skip_qc) {
         QUALITY_CONTROL(ch_samples, params.filtlong_sampling)
-        ch_multiqc_files = ch_multiqc_files.mix(QUALITY_CONTROL.out.multiqc_files)
     }
 
     /*

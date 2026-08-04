@@ -12,7 +12,7 @@ process DORADO_DEMUX {
     tuple val(meta), path('demultiplexed/**/*[!unclassified].fastq'), emit: classified
     tuple val(meta), path('demultiplexed/**/*unclassified*.fastq'), emit: unclassified
     tuple val(meta), path('demultiplexed/barcoding_summary.txt'), emit: summary
-    path 'versions.yml', emit: versions
+    tuple val("${task.process}"), val('dorado'), eval('dorado --version 2>&1'), topic: versions, emit: versions_dorado
 
     script:
     def args = task.ext.args ?: ''
@@ -27,10 +27,5 @@ process DORADO_DEMUX {
         ${sample_sheet_arg} \\
         ${basecalled_reads} \\
         ${args}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        dorado: \$( dorado --version 2>&1 )
-    END_VERSIONS
     """
 }

@@ -20,7 +20,6 @@ workflow TAXONOMIC_ASSIGNMENT {
      */
     if (!val_skip_emu) {
         EMU_ABUNDANCE(ch_reads, ch_emu_db.map { _meta, file -> file })
-        ch_versions = ch_versions.mix(EMU_ABUNDANCE.out.versions)
     }
 
     /*
@@ -28,7 +27,6 @@ workflow TAXONOMIC_ASSIGNMENT {
      */
     if (!val_skip_mmseqs2) {
         MMSEQS_EASYSEARCH(ch_reads, ch_mmseqs2_db)
-        ch_versions = ch_versions.mix(MMSEQS_EASYSEARCH.out.versions)
 
         MMSEQS_SUMMARISE(MMSEQS_EASYSEARCH.out.tsv, val_min_identity, val_min_alignment_length)
         ch_versions = ch_versions.mix(MMSEQS_SUMMARISE.out.versions)

@@ -12,18 +12,15 @@ workflow BASECALLING {
     val_dorado_barcoding_kit // string: dorado barcoding kit name
 
     main:
-    ch_versions = channel.empty()
-
     DORADO_BASECALLER(ch_pod5_dir)
-    ch_versions = ch_versions.mix(DORADO_BASECALLER.out.versions)
 
     BASECALL_FILTER(
         DORADO_BASECALLER.out.reads.map { meta, reads -> [meta, reads, []] },
         [[], []],
         [],
         [],
+        'bai',
     )
-    ch_versions = ch_versions.mix(BASECALL_FILTER.out.versions)
 
     val_sample_sheet = ch_samples
         .collectFile(name: 'sample_sheet.csv', keepHeader: true) { meta, _fastq ->
@@ -39,7 +36,6 @@ workflow BASECALLING {
         val_sample_sheet,
         val_dorado_barcoding_kit,
     )
-    ch_versions = ch_versions.mix(DORADO_DEMUX.out.versions)
 
 
     ch_samples_with_sequences = DORADO_DEMUX.out.classified
@@ -52,9 +48,7 @@ workflow BASECALLING {
         .map { _id, fastq, meta -> [meta, fastq] }
 
     COMPRESS_CLASSIFIED(ch_samples_with_sequences)
-    ch_versions = ch_versions.mix(COMPRESS_CLASSIFIED.out.versions)
 
     emit:
     samples  = COMPRESS_CLASSIFIED.out.archive
-    versions = ch_versions
 }

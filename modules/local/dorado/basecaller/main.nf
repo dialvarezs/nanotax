@@ -11,7 +11,7 @@ process DORADO_BASECALLER {
     output:
     tuple val(meta), path("${prefix}_basecalled.ubam"), emit: reads
     tuple val(meta), path("${prefix}_sequencing_summary.txt"), emit: sequencing_summary
-    path 'versions.yml', emit: versions
+    tuple val("${task.process}"), val('dorado'), eval('dorado --version 2>&1'), topic: versions, emit: versions_dorado
 
     script:
     def args = task.ext.args ?: ''
@@ -27,10 +27,5 @@ process DORADO_BASECALLER {
     > ${prefix}_basecalled.ubam
 
     dorado summary ${prefix}_basecalled.ubam > ${prefix}_sequencing_summary.txt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        dorado: \$( dorado --version 2>&1 )
-    END_VERSIONS
     """
 }

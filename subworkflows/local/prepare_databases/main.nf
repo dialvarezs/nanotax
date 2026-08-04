@@ -19,7 +19,6 @@ workflow PREPARE_DATABASES {
     val_skip_mmseqs2
 
     main:
-    ch_versions = channel.empty()
     ch_emu_db = channel.empty()
     ch_mmseqs2_db = channel.empty()
 
@@ -37,10 +36,8 @@ workflow PREPARE_DATABASES {
                 db_paths[emu_db_name],
             ]
         )
-        ch_versions = ch_versions.mix(EMU_DB_FETCH.out.versions)
 
         EMU_DB_UNTAR(EMU_DB_FETCH.out.download_files)
-        ch_versions = ch_versions.mix(EMU_DB_UNTAR.out.versions)
 
         ch_emu_db = EMU_DB_UNTAR.out.untar
     }
@@ -53,19 +50,15 @@ workflow PREPARE_DATABASES {
                     'https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz',
                 ]
             )
-            ch_versions = ch_versions.mix(TAXDUMP_DOWNLOAD.out.versions)
 
             TAXDUMP_UNTAR(TAXDUMP_DOWNLOAD.out.downloaded_file)
-            ch_versions = ch_versions.mix(TAXDUMP_UNTAR.out.versions)
 
             BLAST_UPDATEBLASTDB([[id: '16S_ribosomal_RNA'], '16S_ribosomal_RNA'])
-            ch_versions = ch_versions.mix(BLAST_UPDATEBLASTDB.out.versions)
 
             BLASTDBCMD_EXTRACT_FASTA(
                 [[id: '16S_genbank'], 'all', []],
                 BLAST_UPDATEBLASTDB.out.db,
             )
-            ch_versions = ch_versions.mix(BLASTDBCMD_EXTRACT_FASTA.out.versions)
 
             BLASTDBCMD_EXTRACT_TAXMAPPING(
                 [[id: '16S_genbank.acc2taxid'], 'all', []],
@@ -73,10 +66,8 @@ workflow PREPARE_DATABASES {
             )
 
             MMSEQS_CREATEDB(BLASTDBCMD_EXTRACT_FASTA.out.fasta)
-            ch_versions = ch_versions.mix(MMSEQS_CREATEDB.out.versions)
 
             MMSEQS_CREATEINDEX(MMSEQS_CREATEDB.out.db)
-            ch_versions = ch_versions.mix(MMSEQS_CREATEINDEX.out.versions)
 
             MMSEQS_CREATETAXDB(
                 MMSEQS_CREATEINDEX.out.db_indexed,
@@ -88,7 +79,6 @@ workflow PREPARE_DATABASES {
         }
         else if (mmseqs2_db_name == 'silva') {
             MMSEQS_DATABASES('silva')
-            ch_versions = ch_versions.mix(MMSEQS_DATABASES.out.versions)
 
             ch_mmseqs2_db = MMSEQS_DATABASES.out.databases.map { db -> [[id: '16S_SILVA'], db] }
         }
@@ -97,5 +87,4 @@ workflow PREPARE_DATABASES {
     emit:
     emu_database     = ch_emu_db
     mmseqs2_database = ch_mmseqs2_db
-    versions         = ch_versions
 }
