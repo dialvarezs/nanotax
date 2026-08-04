@@ -7,7 +7,7 @@ include { PLOT_QUALITY          } from '../../../modules/local/plotquality'
 
 workflow QUALITY_CONTROL {
     take:
-    ch_reads        // channel: [ val(meta), path(fastq) ]
+    ch_reads // channel: [ val(meta), path(fastq) ]
     filtlong_sampling // float: sampling rate for filtlong, 0 to disable
 
     main:
@@ -39,7 +39,6 @@ workflow QUALITY_CONTROL {
 
 
     ch_versions = ch_versions.mix(
-        FASTQC.out.versions.first(),
         NANOQ_QC.out.versions.first(),
         NANOQ_FILTER.out.versions.first(),
     )

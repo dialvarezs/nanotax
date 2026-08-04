@@ -152,9 +152,9 @@ workflow NANOTAX {
 
     def topic_versions_string = topic_versions.versions_tuple
         .map { process, tool, version ->
-            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+            [process[process.lastIndexOf(':') + 1..-1], "  ${tool}: ${version}"]
         }
-        .groupTuple(by:0)
+        .groupTuple(by: 0)
         .map { process, tool_versions ->
             tool_versions.unique().sort()
             "${process}:\n${tool_versions.join('\n')}"
@@ -164,9 +164,9 @@ workflow NANOTAX {
         .mix(topic_versions_string)
         .collectFile(
             storeDir: "${outdir}/pipeline_info",
-            name:  'nanotax_software_'  + 'mqc_'  + 'versions.yml',
+            name: 'nanotax_software_' + 'mqc_' + 'versions.yml',
             sort: true,
-            newLine: true
+            newLine: true,
         )
 
     //
@@ -195,6 +195,8 @@ workflow NANOTAX {
             ]
         }
     )
-    emit:multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList() // channel: /path/to/multiqc_report.html
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+
+    emit:
+    multiqc_report = MULTIQC.out.report.map { _meta, report -> [report] }.toList() // channel: /path/to/multiqc_report.html
+    versions       = ch_versions // channel: [ path(versions.yml) ]
 }

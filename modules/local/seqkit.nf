@@ -28,9 +28,9 @@ process SEQKIT {
 
     stub:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "test"
     // fasta or fastq. Exact pattern match .fasta or .fa suffix with optional .gz (gzip) suffix
-    def suffix = task.ext.suffix ?: "${sequence}" ==~ /(.*f[astn]*a(.gz)?$)/ ? "fa" : "fq"
+    def suffix = task.ext.suffix ?: "fa" ==~ /(.*f[astn]*a(.gz)?$)/ ? "fa" : "fq"
 
     """
     echo "" | gzip > ${prefix}.${suffix}.gz
